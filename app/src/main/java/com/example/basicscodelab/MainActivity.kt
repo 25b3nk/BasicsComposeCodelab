@@ -1,8 +1,13 @@
 package com.example.basicscodelab
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.basicscodelab.ui.theme.BasicsCodelabTheme
@@ -52,7 +58,7 @@ fun MyApp(modifier: Modifier = Modifier, names: List<String> = List(1000) { "$it
 fun Greetings(modifier: Modifier = Modifier, names: List<String> = listOf("World", "Compose")) {
     // A surface container using the 'background' color from the theme
     LazyColumn(modifier = modifier.padding(vertical = 4.dp)) {
-        items(items = names) {name ->
+        items(items = names) { name ->
             Greeting(name = name)
         }
     }
@@ -60,8 +66,15 @@ fun Greetings(modifier: Modifier = Modifier, names: List<String> = listOf("World
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-    val expanded = remember { mutableStateOf(false) }
-    val extraPadding = if (expanded.value) 48.dp else 0.dp
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val extraPadding by animateDpAsState(
+        if (expanded) 48.dp else 0.dp,
+        label = "",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
     Surface(
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(horizontal = 8.dp, vertical = 5.dp)
@@ -70,13 +83,16 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             Column(
                 modifier = modifier
                     .weight(1f)
-                    .padding(bottom = extraPadding)
+                    .padding(bottom = extraPadding.coerceAtLeast(0.dp))
             ) {
                 Text(text = "Namaste,")
-                Text(text = name)
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold)
+                )
             }
-            ElevatedButton(onClick = { expanded.value = !expanded.value }) {
-                Text(text = if (expanded.value) "Show less" else "Show more")
+            ElevatedButton(onClick = { expanded = !expanded }) {
+                Text(text = if (expanded) "Show less" else "Show more")
             }
         }
     }
@@ -111,6 +127,19 @@ fun OnBoardingPreview() {
 @Composable
 fun GreetingPreview() {
     BasicsCodelabTheme {
-        MyApp()
+        Greetings()
+    }
+}
+
+@Preview(
+    showBackground = true,
+    uiMode = UI_MODE_NIGHT_YES,
+    widthDp = 320,
+    name = "dark"
+)
+@Composable
+fun DefaultPreview() {
+    BasicsCodelabTheme {
+        Greetings()
     }
 }
